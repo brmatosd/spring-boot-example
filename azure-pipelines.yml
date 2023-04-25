@@ -10,21 +10,47 @@ trigger:
 pool:
   name: Default
 
-steps:
-- script: |
-    echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
-    echo "##vso[task.setvariable variable=PATH]$(JAVA_HOME_11_X64)/bin:$(PATH)"
-  displayName: "Set java version"
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'package'
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: $(System.DefaultWorkingDirectory)
-    artifactName: TestArtifact    
+stages:
+- stage: Build
+  displayName: CI - Build Stage
+  jobs:
+  - job: Define_Java_Enviroment_Variables
+    displayName: Define Java Enviroment Variables
+
+    steps:
+    - script: |
+        echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
+        echo "##vso[task.setvariable variable=PATH]$(JAVA_HOME_11_X64)/bin:$(PATH)"
+      displayName: "Set java version"
+
+  - job: Define_Maven_Settings
+    displayName: Define Maven Settings
+    steps:
+    - task: Maven@3
+      inputs:
+        mavenPomFile: 'pom.xml'
+        mavenOptions: '-Xmx3072m'
+        javaHomeOption: 'JDKVersion'
+        jdkArchitectureOption: 'x64'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        goals: 'package'
+
+  - job: Publish_Pipeline_Artifct
+    displayName: Publish Pipeline Artifact
+    steps:
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: $(System.DefaultWorkingDirectory)
+          artifactName: TestArtifact
+
+- stage: Deploy
+  displayName: CD - Deploy Stage
+  dependsOn: Build
+  condition: succeeded('Build')
+  jobs:
+    - job: Deploy_App_On_VM
+      displayName: Deploy App on VM
+      steps:
+        - script: |
+            scp -i ~/.ssh/java-test-vm_key.pem $(System.DefaultWorkingDirectory)/spring-boot-example-0.0.1-SNAPSHOT.war azureuser@4.201.51.235:/opt/tomcat/webapps
