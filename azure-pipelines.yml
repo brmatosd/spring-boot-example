@@ -25,6 +25,8 @@ stages:
 
   - job: Define_Maven_Settings
     displayName: Define Maven Settings
+    dependsOn: Define_Java_Enviroment_Variables
+    condition: succeeded ('Define_Java_Enviroment_Variables')
     steps:
     - task: Maven@3
       inputs:
@@ -38,6 +40,7 @@ stages:
 
   - job: Publish_Pipeline_Artifct
     displayName: Publish Pipeline Artifact
+    dependsOn:
     steps:
       - task: PublishPipelineArtifact@1
         inputs:
