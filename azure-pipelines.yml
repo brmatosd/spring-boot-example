@@ -8,7 +8,7 @@ trigger:
 - main
 
 pool:
-  name: Default
+  name: Local Linux
 
 stages:
 - stage: Build
@@ -55,5 +55,5 @@ stages:
         - script: |
             echo $(System.ArtifactsDirectory)
         - script: |
-            scp -i ~/.ssh/java-test-vm_key.pem $(System.ArtifactsDirectory)/TestArtifact/target/spring-boot-example-0.0.1-SNAPSHOT.war azureuser@4.201.51.235:/opt/tomcat/webapps
+            scp -i ~/Documents/java-vm-key.pem $(System.ArtifactsDirectory)/TestArtifact/target/spring-boot-example-0.0.1-SNAPSHOT.war azureuser@20.226.10.251:/opt/tomcat/webapps
   
